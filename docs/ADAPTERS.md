@@ -23,6 +23,17 @@ SignBridge core speaks one JSON protocol. **Adapters** translate other ecosystem
 - Sites historically used **emBridge** (closed). We replace that *app* layer, not the token driver.
 - `profiles::india()` ships known module paths; `doctor` checks which are present.
 
+#### Synthetic DSC (no USB token)
+
+SoftHSM + imported RSA key **and** X.509 (`CN=Synthetic Indian DSC`, `C=IN`) stands in for a real DSC over the same PKCS#11 API:
+
+```bash
+cargo test -p signbridge --features testing
+# SoftHsmFixture::create() builds the synthetic token used by e2e tests
+```
+
+This proves SignBridge’s list / DigestInfo-sign / Web eID cert matching / openssl verify path. It does **not** prove PC/SC, Feitian/Watchdata middleware quirks, or hardware PIN pads — plug in a real token for that.
+
 ### Spain (AutoFirma / @firma)
 - Official stack: [ctt-gob-es/clienteafirma](https://github.com/ctt-gob-es/clienteafirma) (GPL/EUPL) + **AutoScript.js**.
 - Browser launches **AutoFirma** via `afirma://` / local helper; large docs use **triphase** signing (server builds ToBeSigned, client signs hash, server assembles).

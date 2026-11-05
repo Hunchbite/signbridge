@@ -116,7 +116,17 @@ fn softhsm_adapters_sign_when_available() {
         _ => panic!("no certs"),
     };
     assert!(!certs.is_empty(), "expected SoftHSM key");
-    let cert_id = &certs[0].id;
+    // Synthetic DSC must expose a real X.509 DER (what Indian tokens do).
+    let with_der: Vec<_> = certs
+        .iter()
+        .filter(|c| c.certificate_der_b64.is_some())
+        .collect();
+    assert!(
+        !with_der.is_empty(),
+        "synthetic DSC should include X.509 DER; got {:?}",
+        certs.iter().map(|c| (&c.id, &c.subject)).collect::<Vec<_>>()
+    );
+    let cert_id = &with_der[0].id;
 
     // AutoFirma-compat signHash
     use sha2::{Digest, Sha256};
