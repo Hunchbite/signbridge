@@ -1,0 +1,11 @@
+{
+  "allowlist": {
+    "origins": [
+      "https://sign.hunchbite.com"
+    ],
+    "allowLocalhost": true
+  },
+  "pkcs11Modules": [
+    "/opt/homebrew/lib/opensc-pkcs11.so"
+  ]
+}
