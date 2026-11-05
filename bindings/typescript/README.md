@@ -1,19 +1,19 @@
-# @hunchbite/signbridge
-
-Node / TypeScript client: spawns `signbridge-rpc` and speaks NDJSON.
+# @hunchbite/signbridge — plug and play
 
 ```bash
-cargo build -p signbridge-rpc
-cd bindings/typescript && npm i && npx tsx src/smoke.ts
+curl -fsSL https://raw.githubusercontent.com/Hunchbite/signbridge/main/scripts/install.sh | bash
+export PATH="$HOME/.signbridge/bin:$PATH"
+
+npm i   # in this folder, or publish to npm later
+npm run build && npm run smoke
 ```
 
 ```ts
-import { SignBridge } from "@hunchbite/signbridge";
+import { create } from "@hunchbite/signbridge";
 
-const sb = new SignBridge();
+const sb = await create();   // finds / installs signbridge-rpc
 console.log(await sb.ping());
-const certs = await sb.listCertificates();
 await sb.close();
 ```
 
-See [docs/PROTOCOL.md](../../docs/PROTOCOL.md).
+See [docs/QUICKSTART.md](../../docs/QUICKSTART.md).

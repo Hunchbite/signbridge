@@ -19,12 +19,15 @@ cargo build -q -p signbridge --features ffi
 echo "==> NDJSON ping via signbridge-rpc"
 echo '{"id":"1","method":"ping"}' | SIGNBRIDGE_SKIP_ORIGIN=1 ./target/debug/signbridge-rpc | grep -q '"ok":true'
 
-echo "==> Python client ping"
+echo "==> Python create() ping"
 PYTHONPATH=bindings/python python3 - <<'PY'
-from signbridge import Client
-with Client(binary="target/debug/signbridge-rpc") as c:
+from signbridge import create
+with create(binary="target/debug/signbridge-rpc") as c:
     assert c.ping()["name"] == "signbridge"
-    print("python ok", c.ping())
+    print("python create() ok", c.ping())
 PY
+
+echo "==> shell demo"
+PATH="$ROOT/target/debug:$PATH" bash examples/shell/demo.sh >/dev/null
 
 echo "==> all synthetic checks passed"

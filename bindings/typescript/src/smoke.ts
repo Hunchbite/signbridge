@@ -1,8 +1,7 @@
-import { SignBridge } from "./index.js";
+import { create } from "./index.js";
 
-const sb = new SignBridge();
-const ping = await sb.ping();
-console.log("ping", ping);
-const certs = await sb.listCertificates();
-console.log("certs", certs.length);
+const sb = await create();
+console.log("ping", await sb.ping());
+console.log("certs", (await sb.listCertificates()).length);
 await sb.close();
+console.log("plug-and-play ok");

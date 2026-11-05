@@ -1,18 +1,20 @@
-# signbridge (Python)
-
-Thin client: spawns `signbridge-rpc` and speaks NDJSON. No native extension required.
+# signbridge (Python) — plug and play
 
 ```bash
-cargo build -p signbridge-rpc
-pip install -e bindings/python
+# once per machine
+curl -fsSL https://raw.githubusercontent.com/Hunchbite/signbridge/main/scripts/install.sh | bash
+export PATH="$HOME/.signbridge/bin:$PATH"
 
-python - <<'PY'
-from signbridge import Client
-with Client() as c:
-    print(c.ping())
-    for cert in c.list_certificates():
-        print(cert["id"], cert["subject"])
-PY
+pip install -e .
 ```
 
-See [docs/PROTOCOL.md](../../docs/PROTOCOL.md).
+```python
+from signbridge import create
+
+with create() as sb:   # finds engine on PATH or ~/.signbridge/bin (or installs it)
+    print(sb.ping())
+    for c in sb.list_certificates():
+        print(c["id"], c["subject"])
+```
+
+See [docs/QUICKSTART.md](../../docs/QUICKSTART.md).

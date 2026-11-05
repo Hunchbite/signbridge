@@ -11,10 +11,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "src"],
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "smoke": "node --import tsx src/smoke.ts"
+    "smoke": "npm run build && node dist/smoke.js"
   },
   "license": "MIT OR Apache-2.0",
   "repository": {

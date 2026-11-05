@@ -1,13 +1,22 @@
-"""SignBridge Python client — talks NDJSON to `signbridge-rpc` (no Rust needed)."""
+"""SignBridge Python client — plug-and-play NDJSON over `signbridge-rpc`."""
 
 from __future__ import annotations
 
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Any, Optional
+
+from .ensure import ensure_rpc, find_rpc
+
+__all__ = [
+    "Client",
+    "SignBridgeError",
+    "create",
+    "ensure_rpc",
+    "find_rpc",
+]
 
 
 class SignBridgeError(RuntimeError):
@@ -27,14 +36,18 @@ class Client:
         config: Optional[str | Path] = None,
         pin: Optional[str] = None,
         skip_origin: bool = True,
+        auto_install: bool = True,
     ) -> None:
-        self._bin = binary or shutil.which("signbridge-rpc") or _default_rpc_path()
-        if not self._bin or not Path(self._bin).exists():
-            raise FileNotFoundError(
-                "signbridge-rpc not found — build with "
-                "`cargo build -p signbridge-rpc` and put it on PATH, "
-                "or pass binary=/path/to/signbridge-rpc"
-            )
+        if binary:
+            self._bin = binary
+        else:
+            path = ensure_rpc(install=auto_install) if auto_install else find_rpc()
+            if path is None:
+                raise FileNotFoundError(
+                    "signbridge-rpc not found. Run install.sh or pass binary=…"
+                )
+            self._bin = str(path)
+
         env = os.environ.copy()
         if config:
             env["SIGNBRIDGE_CONFIG"] = str(config)
@@ -109,15 +122,6 @@ class Client:
         return self.request("signHash", origin=origin, params=params)
 
 
-def _default_rpc_path() -> Optional[str]:
-    here = Path(__file__).resolve()
-    # bindings/python/signbridge/__init__.py → repo root
-    root = here.parents[3]
-    for rel in (
-        "target/debug/signbridge-rpc",
-        "target/release/signbridge-rpc",
-    ):
-        p = root / rel
-        if p.exists():
-            return str(p)
-    return None
+def create(**kwargs: Any) -> Client:
+    """Plug-and-play entry: ensure engine, return a ready Client."""
+    return Client(**kwargs)

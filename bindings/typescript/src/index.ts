@@ -1,11 +1,11 @@
 /**
- * SignBridge Node/TypeScript client — NDJSON over `signbridge-rpc`.
+ * SignBridge Node/TypeScript client — plug-and-play NDJSON over `signbridge-rpc`.
  */
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createInterface } from "node:readline";
-import { existsSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import path from "node:path";
+import { ensureRpc, findRpc } from "./ensure.js";
+
+export { ensureRpc, findRpc } from "./ensure.js";
 
 export type HashAlg = "SHA-256" | "SHA-384" | "SHA-512";
 
@@ -45,13 +45,8 @@ export class SignBridge {
   }> = [];
   private n = 0;
 
-  constructor(opts: SignBridgeOptions = {}) {
-    const bin = opts.binary ?? resolveRpcBinary();
-    if (!bin) {
-      throw new Error(
-        "signbridge-rpc not found — build with `cargo build -p signbridge-rpc` or pass binary:",
-      );
-    }
+  constructor(opts: SignBridgeOptions & { binary: string }) {
+    const bin = opts.binary;
     const env = { ...process.env };
     if (opts.config) env.SIGNBRIDGE_CONFIG = opts.config;
     if (opts.pin) env.SIGNBRIDGE_PIN = opts.pin;
@@ -151,14 +146,8 @@ export class SignBridge {
   }
 }
 
-function resolveRpcBinary(): string | undefined {
-  if (process.env.SIGNBRIDGE_RPC) return process.env.SIGNBRIDGE_RPC;
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  // dist/ or src/ → bindings/typescript → repo root
-  const root = path.resolve(here, "../../..");
-  for (const rel of ["target/debug/signbridge-rpc", "target/release/signbridge-rpc"]) {
-    const p = path.join(root, rel);
-    if (existsSync(p)) return p;
-  }
-  return undefined;
+/** Plug-and-play: ensure engine is present, then open a client. */
+export async function create(opts: SignBridgeOptions = {}): Promise<SignBridge> {
+  const binary = opts.binary ?? (await ensureRpc());
+  return new SignBridge({ ...opts, binary });
 }
