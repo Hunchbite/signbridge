@@ -150,6 +150,14 @@ impl Pkcs11Backend {
                     let value = object_value(&session, handle).unwrap_or_default();
                     let (subject, issuer, serial_hex) = parse_cert_summary(&value);
                     seen_labels.insert(label.clone());
+                    let der_b64 = if value.is_empty() {
+                        None
+                    } else {
+                        Some(base64::Engine::encode(
+                            &base64::engine::general_purpose::STANDARD,
+                            &value,
+                        ))
+                    };
                     out.push(CertificateInfo {
                         id: CertificateId::format(module, slot_id, &label),
                         subject,
@@ -160,6 +168,7 @@ impl Pkcs11Backend {
                         backend: "pkcs11".into(),
                         token_label: token_label.clone(),
                         key_algo: key_type_for_id(&session, handle),
+                        certificate_der_b64: der_b64,
                     });
                 }
             }
@@ -195,6 +204,7 @@ impl Pkcs11Backend {
                         backend: "pkcs11".into(),
                         token_label: token_label.clone(),
                         key_algo: algo,
+                        certificate_der_b64: None,
                     });
                 }
             }
@@ -230,6 +240,7 @@ impl Pkcs11Backend {
                         backend: "pkcs11".into(),
                         token_label: token_label.clone(),
                         key_algo: algo,
+                        certificate_der_b64: None,
                     });
                 }
             }

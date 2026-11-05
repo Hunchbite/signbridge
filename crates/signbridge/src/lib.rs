@@ -24,11 +24,13 @@
 
 #![deny(missing_docs)]
 
+pub mod adapters;
 pub mod allowlist;
 pub mod backend;
 pub mod config;
 pub mod error;
 pub mod ipc;
+pub mod profiles;
 pub mod protocol;
 pub mod security;
 pub mod service;
@@ -42,11 +44,13 @@ pub mod testing;
 #[cfg(feature = "ffi")]
 pub mod ffi;
 
+pub use adapters::{handle_wire, WireProtocol};
 pub use allowlist::OriginAllowlist;
 pub use backend::{CertificateBackend, SignOutput, SignParams};
 pub use config::AppConfig;
 pub use error::{Error, Result};
-pub use ipc::{handle_bytes, serve_stdio, Framing};
+pub use ipc::{handle_bytes, serve_stdio, serve_stdio_protocol, Framing};
+pub use profiles::{doctor, DoctorReport, ModuleCandidate};
 pub use protocol::{HashAlg, Request, Response};
 pub use service::{AutoConfirm, ConfirmPrompt, SignService};
 

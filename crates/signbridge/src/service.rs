@@ -3,8 +3,9 @@
 use crate::backend::{CertificateBackend, SignParams};
 use crate::config::AppConfig;
 use crate::error::{Error, Result};
+use crate::profiles;
 use crate::protocol::{
-    ListCertificatesResult, PingResult, Request, Response, ResponseBody, SignResult,
+    DoctorResult, ListCertificatesResult, PingResult, Request, Response, ResponseBody, SignResult,
 };
 use crate::security::validate_digest;
 use crate::{NAME, VERSION};
@@ -100,6 +101,24 @@ impl<C: ConfirmPrompt> SignService<C> {
                 name: NAME.into(),
                 version: VERSION.into(),
             })),
+            Request::Doctor { .. } => {
+                let report = profiles::doctor();
+                let certificate_count = self.backend.list_certificates().map(|c| c.len()).unwrap_or(0);
+                Ok(ResponseBody::Doctor(DoctorResult {
+                    os: report.os,
+                    modules_found: report.modules_found,
+                    modules_missing_sample: report.modules_missing_sample,
+                    opensc_present: report.opensc_present,
+                    modules_configured: self
+                        .config
+                        .pkcs11_modules
+                        .iter()
+                        .map(|p| p.display().to_string())
+                        .collect(),
+                    certificate_count,
+                    hints: report.hints,
+                }))
+            }
             Request::ListCertificates { .. } => {
                 let certificates = self.backend.list_certificates()?;
                 info!(count = certificates.len(), "listed certificates");

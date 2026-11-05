@@ -23,6 +23,7 @@ No TCP port. Private keys never leave the token. Only digests are signed.
 | `method` | Purpose |
 |---|---|
 | `ping` | Version / liveness |
+| `doctor` | Probe PKCS#11 middleware (India / Spain / EU / SoftHSM) |
 | `listCertificates` | List signable identities |
 | `signHash` | Sign a hex digest |
 
@@ -31,6 +32,14 @@ No TCP port. Private keys never leave the token. Only digests are signed.
 ```json
 { "id": "1", "method": "ping" }
 ```
+
+### `doctor`
+
+```json
+{ "id": "d1", "method": "doctor" }
+```
+
+Returns which regional PKCS#11 modules exist on disk, which are configured in this process, certificate count, and setup hints. No origin required.
 
 ### `listCertificates`
 
@@ -75,8 +84,10 @@ Stable error codes: `origin_denied`, `bad_digest`, `unknown_certificate`, `cance
 ## Transport A — `signbridge-rpc` (recommended for SDKs)
 
 ```bash
-signbridge-rpc                  # NDJSON: one JSON object per line on stdin
-signbridge-rpc --framed         # Chrome native-messaging framing (4-byte LE length)
+signbridge-rpc                           # NDJSON: one JSON object per line on stdin
+signbridge-rpc --framed                  # Chrome native-messaging framing (4-byte LE length)
+signbridge-rpc --protocol webeid         # Web eID native commands
+signbridge-rpc --protocol afirma         # AutoFirma-style hash-sign subset
 ```
 
 Env:
@@ -86,6 +97,7 @@ Env:
 | `SIGNBRIDGE_CONFIG` | Path to JSON config |
 | `SIGNBRIDGE_PIN` | Token PIN (tests / automation only) |
 | `SIGNBRIDGE_SKIP_ORIGIN` | `1` to skip allowlist (local tools) |
+| `SIGNBRIDGE_PROTOCOL` | `signbridge` (default) / `webeid` / `afirma` |
 
 ### NDJSON example
 

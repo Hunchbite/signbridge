@@ -1,12 +1,13 @@
 //! `signbridge-rpc` — language-agnostic JSON protocol on stdin/stdout.
 //!
 //! Default: NDJSON (one request JSON per line). Use `--framed` for Chrome
-//! native-messaging length prefixes.
+//! native-messaging length prefixes. Use `--protocol webeid|afirma` for
+//! ecosystem adapters.
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use signbridge::ipc::{serve_stdio, Framing};
-use signbridge::{AppConfig, AutoConfirm, SignService};
+use signbridge::ipc::{serve_stdio_protocol, Framing};
+use signbridge::{AppConfig, AutoConfirm, SignService, WireProtocol};
 use std::io::{stdin, stdout};
 use std::path::PathBuf;
 use tracing::info;
@@ -34,6 +35,10 @@ struct Args {
     /// Use Chrome native-messaging framing instead of NDJSON.
     #[arg(long)]
     framed: bool,
+
+    /// Wire protocol: `signbridge` (default), `webeid`, or `afirma`.
+    #[arg(long, env = "SIGNBRIDGE_PROTOCOL", default_value = "signbridge")]
+    protocol: String,
 }
 
 fn main() {
@@ -52,6 +57,7 @@ fn run() -> Result<()> {
     let args = Args::parse();
     let mut config =
         AppConfig::load_or_default(args.config.as_deref()).context("load config")?;
+    config = config.with_profile_modules();
     if args.skip_origin || std::env::var_os("SIGNBRIDGE_SKIP_ORIGIN").is_some() {
         config.skip_origin_check = true;
     }
@@ -70,17 +76,26 @@ fn run() -> Result<()> {
         Framing::Ndjson
     };
 
+    let protocol = WireProtocol::parse(&args.protocol).ok_or_else(|| {
+        anyhow::anyhow!(
+            "unknown --protocol {:?} (expected signbridge|webeid|afirma)",
+            args.protocol
+        )
+    })?;
+
     info!(
         version = signbridge::VERSION,
         ?framing,
+        ?protocol,
         modules = config.pkcs11_modules.len(),
         "signbridge-rpc ready"
     );
 
     let service = SignService::new(config, AutoConfirm { pin });
-    serve_stdio(
+    serve_stdio_protocol(
         &service,
         framing,
+        protocol,
         stdin().lock(),
         stdout().lock(),
     )?;

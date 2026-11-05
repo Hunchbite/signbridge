@@ -98,10 +98,27 @@ pub fn handle_bytes<C: ConfirmPrompt>(service: &SignService<C>, raw: &[u8]) -> V
     })
 }
 
-/// Run a request/response loop until stdin EOF.
+/// Run a request/response loop until stdin EOF (native SignBridge protocol).
 pub fn serve_stdio<C: ConfirmPrompt>(
     service: &SignService<C>,
     framing: Framing,
+    input: impl BufRead,
+    output: impl Write,
+) -> Result<()> {
+    serve_stdio_protocol(
+        service,
+        framing,
+        crate::adapters::WireProtocol::SignBridge,
+        input,
+        output,
+    )
+}
+
+/// Run a request/response loop with a chosen wire protocol (SignBridge / Web eID / AutoFirma).
+pub fn serve_stdio_protocol<C: ConfirmPrompt>(
+    service: &SignService<C>,
+    framing: Framing,
+    protocol: crate::adapters::WireProtocol,
     mut input: impl BufRead,
     mut output: impl Write,
 ) -> Result<()> {
@@ -112,7 +129,17 @@ pub fn serve_stdio<C: ConfirmPrompt>(
         if raw.is_empty() {
             continue;
         }
-        let out = handle_bytes(service, &raw);
+        let out = match crate::adapters::handle_wire(protocol, service, &raw) {
+            Ok(v) => serde_json::to_vec(&v).unwrap_or_else(|e| {
+                format!(r#"{{"ok":false,"error":{{"code":"internal","message":"{e}"}}}}"#)
+                    .into_bytes()
+            }),
+            Err(e) => serde_json::to_vec(&serde_json::json!({
+                "ok": false,
+                "error": {"code": e.code(), "message": e.to_string()}
+            }))
+            .unwrap_or_else(|_| b"{\"ok\":false}".to_vec()),
+        };
         write_frame(&mut output, framing, &out)?;
     }
     Ok(())

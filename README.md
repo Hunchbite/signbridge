@@ -14,7 +14,12 @@ export PATH="$HOME/.signbridge/bin:$PATH"
 
 # 2. Talk to it from anything
 echo '{"id":"1","method":"ping"}' | signbridge-rpc --skip-origin
+
+# 3. Diagnose Indian / Spain / EU PKCS#11 modules on this machine
+echo '{"id":"1","method":"doctor"}' | signbridge-rpc --skip-origin
 ```
+
+Adapters for **Web eID** and **AutoFirma hash-sign** (same engine): see [docs/ADAPTERS.md](docs/ADAPTERS.md).
 
 ### Node
 

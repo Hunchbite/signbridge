@@ -51,6 +51,13 @@ pub enum Request {
         id: String,
     },
 
+    /// Probe PKCS#11 middleware / Indian–Spain–EU module presence.
+    #[serde(rename = "doctor")]
+    Doctor {
+        /// Correlation id.
+        id: String,
+    },
+
     /// List certificates / keys visible to the backend.
     #[serde(rename = "listCertificates")]
     ListCertificates {
@@ -77,6 +84,7 @@ impl Request {
     pub fn id(&self) -> &str {
         match self {
             Self::Ping { id }
+            | Self::Doctor { id }
             | Self::ListCertificates { id, .. }
             | Self::SignHash { id, .. } => id,
         }
@@ -85,7 +93,7 @@ impl Request {
     /// Origin when present.
     pub fn origin(&self) -> Option<&str> {
         match self {
-            Self::Ping { .. } => None,
+            Self::Ping { .. } | Self::Doctor { .. } => None,
             Self::ListCertificates { origin, .. } | Self::SignHash { origin, .. } => {
                 Some(origin.as_str())
             }
@@ -131,6 +139,10 @@ pub struct CertificateInfo {
     pub token_label: Option<String>,
     /// Key algorithm hint (`RSA`, `EC`, …).
     pub key_algo: Option<String>,
+    /// Base64 DER X.509 leaf when the backend has a real certificate object.
+    /// Required for Web eID `get-signing-certificate` / `sign` certificate matching.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub certificate_der_b64: Option<String>,
 }
 
 /// Successful `signHash` payload.
@@ -153,10 +165,32 @@ pub struct SignResult {
 pub enum ResponseBody {
     /// `ping` result.
     Ping(PingResult),
+    /// `doctor` result.
+    Doctor(DoctorResult),
     /// `listCertificates` result.
     Certificates(ListCertificatesResult),
     /// `signHash` result.
     Sign(SignResult),
+}
+
+/// `doctor` payload — middleware / profile diagnostics.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DoctorResult {
+    /// OS family.
+    pub os: String,
+    /// Modules found on disk (from regional profiles).
+    pub modules_found: Vec<crate::profiles::ModuleCandidate>,
+    /// Sample of missing India/Spain candidates.
+    pub modules_missing_sample: Vec<crate::profiles::ModuleCandidate>,
+    /// Whether an OpenSC-looking module is present.
+    pub opensc_present: bool,
+    /// Modules currently loaded / configured for this process.
+    pub modules_configured: Vec<String>,
+    /// Certificates currently visible (count).
+    pub certificate_count: usize,
+    /// Hints for the operator.
+    pub hints: Vec<String>,
 }
 
 /// `ping` payload.
