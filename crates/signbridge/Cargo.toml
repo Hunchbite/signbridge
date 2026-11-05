@@ -10,11 +10,17 @@ readme = "../../README.md"
 keywords = ["pkcs11", "signing", "dsc", "pades", "token"]
 categories = ["cryptography", "authentication"]
 
+[lib]
+name = "signbridge"
+crate-type = ["rlib", "cdylib", "staticlib"]
+
 [features]
 default = ["pkcs11"]
 pkcs11 = ["dep:cryptoki"]
 # SoftHSM helpers for apps and integration tests. Not needed at runtime.
 testing = ["dep:tempfile", "pkcs11"]
+# C ABI (signbridge_new / signbridge_request / …).
+ffi = []
 
 [dependencies]
 anyhow.workspace = true

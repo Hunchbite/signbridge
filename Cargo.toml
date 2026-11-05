@@ -1,7 +1,13 @@
 [workspace]
 resolver = "2"
-members = ["crates/signbridge"]
-default-members = ["crates/signbridge"]
+members = [
+    "crates/signbridge",
+    "crates/signbridge-rpc",
+]
+default-members = [
+    "crates/signbridge",
+    "crates/signbridge-rpc",
+]
 
 [workspace.package]
 version = "0.1.0"
@@ -16,6 +22,7 @@ description = "Open-source signing framework for PKCS#11 tokens and OS certifica
 signbridge = { path = "crates/signbridge", version = "0.1.0" }
 anyhow = "1"
 base64 = "0.22"
+clap = { version = "4", features = ["derive", "env"] }
 cryptoki = "0.12"
 hex = "0.4"
 serde = { version = "1", features = ["derive"] }

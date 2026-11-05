@@ -1,0 +1,19 @@
+[project]
+name = "signbridge"
+version = "0.1.0"
+description = "Python client for SignBridge (spawns signbridge-rpc over NDJSON)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT OR Apache-2.0" }
+authors = [{ name = "Hunchbite Technologies Private Limited" }]
+
+[project.urls]
+Homepage = "https://github.com/Hunchbite/signbridge"
+Documentation = "https://github.com/Hunchbite/signbridge/blob/main/docs/PROTOCOL.md"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["signbridge*"]

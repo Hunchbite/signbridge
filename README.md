@@ -1,44 +1,78 @@
 # SignBridge
 
-**Open-source signing framework** (Rust). Sign document fingerprints with USB DSC tokens via PKCS#11 — never the full PDF. No Java.
+**Language-agnostic signing framework.** Sign document fingerprints with USB DSC tokens (PKCS#11) — never the full PDF. No Java. No open TCP port.
 
-This repo is the **library**. Desktop apps, the Chrome extension, and Hunchbite packaging live in [`signbridge-apps`](https://github.com/Hunchbite/signbridge-apps).
+Product apps (Chrome extension, installers) live in [`signbridge-apps`](https://github.com/Hunchbite/signbridge-apps).
 
-## Install / embed
+## How any language uses core
 
-```toml
-[dependencies]
-signbridge = { git = "https://github.com/Hunchbite/signbridge" }
-# or, side-by-side: path = "../signbridge/crates/signbridge"
+```
+TS / Python / Go / Swift / Java / shell
+        │
+        ├─ spawn signbridge-rpc   ← NDJSON stdio  (recommended)
+        ├─ load libsignbridge     ← C ABI, JSON in/out
+        ├─ cargo / Rust API       ← in-process
+        └─ CLI (signbridge-apps)  ← one-shot commands
 ```
 
-```rust
-use signbridge::{AppConfig, AutoConfirm, SignService};
-use signbridge::protocol::Request;
+Full contract: **[docs/PROTOCOL.md](docs/PROTOCOL.md)**
 
-let svc = SignService::new(AppConfig::for_cli(), AutoConfirm { pin: None });
-let res = svc.handle(Request::Ping { id: "1".into() });
-```
+| Surface | Path |
+|---|---|
+| JSON protocol | `docs/PROTOCOL.md` |
+| RPC binary | `cargo run -p signbridge-rpc` |
+| C header | `bindings/c/signbridge.h` |
+| Python client | `bindings/python` |
+| TypeScript client | `bindings/typescript` |
 
-Implement `ConfirmPrompt` for your UI. Implement `CertificateBackend` for Keychain / Windows / cloud later — or use the bundled PKCS#11 backend.
-
-Token **drivers** (OpenSC, SoftHSM, vendor modules) are not bundled; point `AppConfig.pkcs11_modules` at them.
-
-## Build & test
+### Quick: any language via RPC
 
 ```bash
-brew install softhsm opensc   # synthetic tests
+cargo build -p signbridge-rpc
+echo '{"id":"1","method":"ping"}' | ./target/debug/signbridge-rpc --skip-origin
+```
+
+### Python
+
+```bash
+pip install -e bindings/python
+python -c 'from signbridge import Client; print(Client().__enter__().ping())'
+```
+
+### TypeScript
+
+```bash
+cd bindings/typescript && npm i && npx tsx src/smoke.ts
+```
+
+### C / FFI
+
+```bash
+cargo build -p signbridge --features ffi --release
+# link target/release/libsignbridge.{dylib,so,dll} with bindings/c/signbridge.h
+```
+
+### Rust
+
+```toml
+signbridge = { git = "https://github.com/Hunchbite/signbridge" }
+```
+
+## Security
+
+1. Stdio or in-process only — no signing HTTP port.
+2. Origin allowlist for browser hosts; SDKs use `--skip-origin` / `SIGNBRIDGE_SKIP_ORIGIN=1`.
+3. Digests only (SHA-256 / 384 / 512).
+4. Private keys never leave the token.
+
+## Test
+
+```bash
+brew install softhsm opensc
 cargo test -p signbridge --features testing
 ./scripts/synthetic_e2e.sh
 ```
 
-## Layout
-
-```
-crates/signbridge/   # publishable framework crate
-docs/FRAMEWORK.md    # how to embed
-```
-
 ## Licence
 
-MIT OR Apache-2.0 · [Hunchbite Technologies Private Limited](https://hunchbite.com)
+MIT OR Apache-2.0 · [Hunchbite](https://hunchbite.com)

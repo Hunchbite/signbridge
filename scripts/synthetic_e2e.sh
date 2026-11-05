@@ -12,4 +12,19 @@ fi
 echo "==> SoftHSM framework tests"
 cargo test -p signbridge --features testing -- --nocapture
 
+echo "==> build RPC + FFI"
+cargo build -q -p signbridge-rpc
+cargo build -q -p signbridge --features ffi
+
+echo "==> NDJSON ping via signbridge-rpc"
+echo '{"id":"1","method":"ping"}' | SIGNBRIDGE_SKIP_ORIGIN=1 ./target/debug/signbridge-rpc | grep -q '"ok":true'
+
+echo "==> Python client ping"
+PYTHONPATH=bindings/python python3 - <<'PY'
+from signbridge import Client
+with Client(binary="target/debug/signbridge-rpc") as c:
+    assert c.ping()["name"] == "signbridge"
+    print("python ok", c.ping())
+PY
+
 echo "==> all synthetic checks passed"

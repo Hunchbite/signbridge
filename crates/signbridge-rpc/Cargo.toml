@@ -1,0 +1,19 @@
+[package]
+name = "signbridge-rpc"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "Language-agnostic SignBridge JSON-RPC over stdio (NDJSON or native messaging)"
+
+[[bin]]
+name = "signbridge-rpc"
+path = "src/main.rs"
+
+[dependencies]
+signbridge = { workspace = true, features = ["pkcs11"] }
+anyhow.workspace = true
+clap = { version = "4", features = ["derive", "env"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
