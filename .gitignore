@@ -3,3 +3,7 @@
 .DS_Store
 .env
 *.pdb
+__pycache__/
+*.pyc
+bindings/typescript/node_modules/
+bindings/typescript/dist/
